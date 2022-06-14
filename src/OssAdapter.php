@@ -1,6 +1,6 @@
 <?php
 
-namespace Xxtime\Flysystem\Aliyun;
+namespace dingmuqi\Flysystem\Aliyun;
 
 
 use League\Flysystem\Adapter\AbstractAdapter;
@@ -9,8 +9,7 @@ use League\Flysystem\Util;
 use OSS\OssClient;
 use Exception;
 
-class OssAdapter extends AbstractAdapter
-{
+class OssAdapter extends AbstractAdapter {
 
     /**
      * @var Supports
@@ -37,10 +36,9 @@ class OssAdapter extends AbstractAdapter
      * @param array $config
      * @throws Exception
      */
-    public function __construct($config = [])
-    {
-        $isCName        = false;
-        $token          = null;
+    public function __construct($config = []) {
+        $isCName = false;
+        $token = null;
         $this->supports = new Supports();
         try {
             $this->bucket = $config['bucket'];
@@ -73,8 +71,7 @@ class OssAdapter extends AbstractAdapter
      *
      * @return array|false false on failure file meta data on success
      */
-    public function write($path, $contents, Config $config)
-    {
+    public function write($path, $contents, Config $config) {
         $result = $this->oss->putObject($this->bucket, $path, $contents, $this->getOssOptions($config));
         $this->supports->setFlashData($result);
         return $result;
@@ -89,19 +86,18 @@ class OssAdapter extends AbstractAdapter
      *
      * @return array|false false on failure file meta data on success
      */
-    public function writeStream($path, $resource, Config $config)
-    {
+    public function writeStream($path, $resource, Config $config) {
         if (!is_resource($resource)) {
             return false;
         }
-        $i          = 0;
+        $i = 0;
         $bufferSize = 1000000; // 1M
         while (!feof($resource)) {
             if (false === $buffer = fread($resource, $block = $bufferSize)) {
                 return false;
             }
             $position = $i * $bufferSize;
-            $size     = $this->oss->appendObject($this->bucket, $path, $buffer, $position, $this->getOssOptions($config));
+            $size = $this->oss->appendObject($this->bucket, $path, $buffer, $position, $this->getOssOptions($config));
             $i++;
         }
         fclose($resource);
@@ -117,8 +113,7 @@ class OssAdapter extends AbstractAdapter
      *
      * @return array|false false on failure file meta data on success
      */
-    public function update($path, $contents, Config $config)
-    {
+    public function update($path, $contents, Config $config) {
         $result = $this->oss->putObject($this->bucket, $path, $contents, $this->getOssOptions($config));
         $this->supports->setFlashData($result);
         return $result;
@@ -133,8 +128,7 @@ class OssAdapter extends AbstractAdapter
      *
      * @return array|false false on failure file meta data on success
      */
-    public function updateStream($path, $resource, Config $config)
-    {
+    public function updateStream($path, $resource, Config $config) {
         $result = $this->write($path, stream_get_contents($resource), $config);
         if (is_resource($resource)) {
             fclose($resource);
@@ -150,8 +144,7 @@ class OssAdapter extends AbstractAdapter
      *
      * @return bool
      */
-    public function rename($path, $newpath)
-    {
+    public function rename($path, $newpath) {
         $this->oss->copyObject($this->bucket, $path, $this->bucket, $newpath);
         $this->oss->deleteObject($this->bucket, $path);
         return true;
@@ -165,8 +158,7 @@ class OssAdapter extends AbstractAdapter
      *
      * @return bool
      */
-    public function copy($path, $newpath)
-    {
+    public function copy($path, $newpath) {
         $this->oss->copyObject($this->bucket, $path, $this->bucket, $newpath);
         return true;
     }
@@ -178,8 +170,7 @@ class OssAdapter extends AbstractAdapter
      *
      * @return bool
      */
-    public function delete($path)
-    {
+    public function delete($path) {
         $this->oss->deleteObject($this->bucket, $path);
         return true;
     }
@@ -191,8 +182,7 @@ class OssAdapter extends AbstractAdapter
      *
      * @return bool
      */
-    public function deleteDir($dirname)
-    {
+    public function deleteDir($dirname) {
         $lists = $this->listContents($dirname, true);
         if (!$lists) {
             return false;
@@ -213,8 +203,7 @@ class OssAdapter extends AbstractAdapter
      *
      * @return array|false
      */
-    public function createDir($dirname, Config $config)
-    {
+    public function createDir($dirname, Config $config) {
         $this->oss->createObjectDir($this->bucket, $dirname);
         return true;
     }
@@ -229,8 +218,7 @@ class OssAdapter extends AbstractAdapter
      *
      * Aliyun OSS ACL value: 'default', 'private', 'public-read', 'public-read-write'
      */
-    public function setVisibility($path, $visibility)
-    {
+    public function setVisibility($path, $visibility) {
         $this->oss->putObjectAcl(
             $this->bucket,
             $path,
@@ -246,8 +234,7 @@ class OssAdapter extends AbstractAdapter
      *
      * @return array|bool|null
      */
-    public function has($path)
-    {
+    public function has($path) {
         return $this->oss->doesObjectExist($this->bucket, $path);
     }
 
@@ -258,8 +245,7 @@ class OssAdapter extends AbstractAdapter
      *
      * @return array|false
      */
-    public function read($path)
-    {
+    public function read($path) {
         return [
             'contents' => $this->oss->getObject($this->bucket, $path)
         ];
@@ -272,8 +258,7 @@ class OssAdapter extends AbstractAdapter
      *
      * @return array|false
      */
-    public function readStream($path)
-    {
+    public function readStream($path) {
         $resource = 'http://' . $this->bucket . '.' . $this->endpoint . '/' . $path;
         return [
             'stream' => $resource = fopen($resource, 'r')
@@ -288,11 +273,10 @@ class OssAdapter extends AbstractAdapter
      *
      * @return array
      */
-    public function listContents($directory = '', $recursive = false)
-    {
+    public function listContents($directory = '', $recursive = false) {
         $directory = rtrim($directory, '\\/');
 
-        $result     = [];
+        $result = [];
         $nextMarker = '';
         while (true) {
             // max-keys 用于限定此次返回object的最大数，如果不设定，默认为100，max-keys取值不能大于1000。
@@ -300,12 +284,12 @@ class OssAdapter extends AbstractAdapter
             // delimiter是一个用于对Object名字进行分组的字符。所有名字包含指定的前缀且第一次出现delimiter字符之间的object作为一组元素
             // marker   用户设定结果从marker之后按字母排序的第一个开始返回。
             $options = [
-                'max-keys'  => 1000,
-                'prefix'    => $directory . '/',
+                'max-keys' => 1000,
+                'prefix' => $directory . '/',
                 'delimiter' => '/',
-                'marker'    => $nextMarker,
+                'marker' => $nextMarker,
             ];
-            $res     = $this->oss->listObjects($this->bucket, $options);
+            $res = $this->oss->listObjects($this->bucket, $options);
 
             // 得到nextMarker，从上一次$res读到的最后一个文件的下一个文件开始继续获取文件列表
             $nextMarker = $res->getNextMarker();
@@ -328,10 +312,10 @@ class OssAdapter extends AbstractAdapter
                         continue;
                     }
                     $result[] = [
-                        'type'      => 'file',
-                        'path'      => $value->getKey(),
+                        'type' => 'file',
+                        'path' => $value->getKey(),
                         'timestamp' => strtotime($value->getLastModified()),
-                        'size'      => $value->getSize()
+                        'size' => $value->getSize()
                     ];
                 }
             }
@@ -350,8 +334,7 @@ class OssAdapter extends AbstractAdapter
      *
      * @return array|false
      */
-    public function getMetadata($path)
-    {
+    public function getMetadata($path) {
         return $this->oss->getObjectMeta($this->bucket, $path);
     }
 
@@ -362,8 +345,7 @@ class OssAdapter extends AbstractAdapter
      *
      * @return array|false
      */
-    public function getSize($path)
-    {
+    public function getSize($path) {
         $response = $this->oss->getObjectMeta($this->bucket, $path);
         return [
             'size' => $response['content-length']
@@ -377,8 +359,7 @@ class OssAdapter extends AbstractAdapter
      *
      * @return array|false
      */
-    public function getMimetype($path)
-    {
+    public function getMimetype($path) {
         $response = $this->oss->getObjectMeta($this->bucket, $path);
         return [
             'mimetype' => $response['content-type']
@@ -392,8 +373,7 @@ class OssAdapter extends AbstractAdapter
      *
      * @return array|false
      */
-    public function getTimestamp($path)
-    {
+    public function getTimestamp($path) {
         $response = $this->oss->getObjectMeta($this->bucket, $path);
         return [
             'timestamp' => $response['last-modified']
@@ -407,8 +387,7 @@ class OssAdapter extends AbstractAdapter
      *
      * @return array|false
      */
-    public function getVisibility($path)
-    {
+    public function getVisibility($path) {
         $response = $this->oss->getObjectAcl($this->bucket, $path);
         return [
             'visibility' => $response,
@@ -420,8 +399,7 @@ class OssAdapter extends AbstractAdapter
      * @param Config $config
      * @return array
      */
-    private function getOssOptions(Config $config)
-    {
+    private function getOssOptions(Config $config) {
         $options = [];
         if ($config->has("headers")) {
             $options['headers'] = $config->get("headers");
@@ -433,9 +411,26 @@ class OssAdapter extends AbstractAdapter
 
         if ($config->has("Content-Md5")) {
             $options["Content-Md5"] = $config->get("Content-Md5");
-            $options["checkmd5"]    = false;
+            $options["checkmd5"] = false;
         }
         return $options;
+    }
+
+    /**
+     * @return OssClient
+     */
+    /*public function getOss() {
+        return $this->oss->optionsObject();
+    }*/
+
+    public function getPreviewUrl($path) {
+        $options = [
+            OssClient::OSS_PROCESS => "imm/previewdoc"
+        ];
+        /*       return [
+                   'contents' => $this->oss->getObject($this->bucket, $path)
+               ];*/
+        return $this->oss->getObject($this->bucket, $path, $options);
     }
 
 }

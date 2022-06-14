@@ -5,7 +5,7 @@
  */
 
 use League\Flysystem\Filesystem;
-use Xxtime\Flysystem\Aliyun\OssAdapter;
+use dingmuqi\Flysystem\Aliyun\OssAdapter;
 use finfo;
 
 class uploadWithContentType
